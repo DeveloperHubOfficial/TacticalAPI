@@ -52,7 +52,7 @@ app.use('/api/commands', verifyToken, commandRoutes);
 // Root route
 app.get('/', (req, res) => {
   res.json({
-    message: 'Welcome to the TacticalAPI for DevHub Discord Bot',
+    message: 'Welcome to the TacticalAPI for the Tactical AI Bot',
     version: '1.0.0',
     status: 'online',
     documentation: '/api/docs'
@@ -82,7 +82,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(chalk.green(`[SUCCESS] >> TacticalAPI running on port ${PORT}`));
 });

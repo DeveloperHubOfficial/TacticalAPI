@@ -2,13 +2,13 @@ const mongoose = require('mongoose');
 const chalk = require('chalk');
 
 function logMessage(type, message) {
-    const colorMap = {
+    const colourMap = {
         info: chalk.blue,
         success: chalk.green,
         error: chalk.red,
         warning: chalk.yellow
     };
-    console.log(colorMap[type](message));
+    console.log(colourMap[type](message));
 }
 
 async function connectDB() {

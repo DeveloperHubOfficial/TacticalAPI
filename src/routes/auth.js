@@ -3,7 +3,6 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../database/models/User');
 
-// Register a new user
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -44,7 +43,6 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
     
-    // Return user info (excluding password)
     res.status(201).json({
       message: 'User registered successfully',
       user: {
