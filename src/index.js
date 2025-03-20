@@ -28,7 +28,16 @@ connectDB();
 // Apply middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+
+// Configure CORS
+app.use(cors({
+    origin: ['https://developerhubofficial.github.io', 'http://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    optionsSuccessStatus: 200
+}));
+
 app.use(morgan('dev'));
 
 // Configure Helmet with adjustments for static file serving
@@ -39,9 +48,12 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "https:", "data:"],
-            fontSrc: ["'self'", "https://cdn.jsdelivr.net"]
+            fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
+            connectSrc: ["'self'", "https://developerhubofficial.github.io"]
         }
-    }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 // Serve static files from public directory
@@ -62,7 +74,7 @@ app.use('/api', apiLimiter);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', verifyToken, userRoutes);
-app.use('/api/bot', verifyToken, botRoutes);
+app.use('/api/bot', botRoutes); // No verifyToken here since some endpoints are public
 app.use('/api/guilds', verifyToken, guildRoutes);
 app.use('/api/commands', verifyToken, commandRoutes);
 
@@ -103,6 +115,9 @@ app.use((err, req, res, next) => {
         message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
     });
 });
+
+// Pre-flight OPTIONS handler
+app.options('*', cors());
 
 app.listen(PORT, () => {
     console.log(chalk.green(`[SUCCESS] >> TacticalAPI running on port ${PORT}`));

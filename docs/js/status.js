@@ -1,39 +1,109 @@
 import CONFIG from './config.js';
 
 let startTime = Date.now();
+let retryCount = 0;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000; // 2 seconds
+
+async function logError(level, message, error = null) {
+    try {
+        await fetch(`${CONFIG.API_URL}/api/bot/log`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                level,
+                message,
+                error: error ? error.toString() : null,
+                timestamp: new Date().toISOString()
+            })
+        });
+    } catch (e) {
+        console.error('Failed to log error:', e);
+    }
+}
 
 async function refreshStatus() {
     const startCheck = performance.now();
     updateLastUpdated();
     
     try {
-        // Check API Status
-        const apiResponse = await checkEndpoint(`${CONFIG.API_URL}/api/bot/health`);
+        // Check API Status with retry
+        const apiResponse = await retryOperation(() => checkEndpoint(`${CONFIG.API_URL}/api/bot/health`));
         const responseTime = Math.round(performance.now() - startCheck);
         updateApiStatus(apiResponse, responseTime);
 
         // Check Bot Status
-        const botResponse = await checkEndpoint(`${CONFIG.API_URL}/api/bot/status`);
+        const botResponse = await retryOperation(() => checkEndpoint(`${CONFIG.API_URL}/api/bot/status`));
         updateBotStatus(botResponse);
 
         // Check DB Status
-        const dbResponse = await checkEndpoint(`${CONFIG.API_URL}/api/health/database`);
+        const dbResponse = await retryOperation(() => checkEndpoint(`${CONFIG.API_URL}/api/bot/health/database`));
         updateDbStatus(dbResponse);
 
         // Check System Resources
-        const systemResponse = await checkEndpoint(`${CONFIG.API_URL}/api/health/system`);
+        const systemResponse = await retryOperation(() => checkEndpoint(`${CONFIG.API_URL}/api/bot/health/system`));
         updateSystemStatus(systemResponse);
 
+        // Reset retry count on success
+        retryCount = 0;
+        
+        // Log successful status update
+        await logError('info', 'Status update completed successfully', { 
+            responseTime,
+            apiStatus: apiResponse.status,
+            botStatus: botResponse.status
+        });
     } catch (error) {
         console.error('Error refreshing status:', error);
+        await logError('error', 'Failed to refresh status', error);
         markServiceDown();
     }
 }
 
+async function retryOperation(operation) {
+    let lastError;
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            return await operation();
+        } catch (error) {
+            lastError = error;
+            console.warn(`Attempt ${i + 1} failed, retrying in ${RETRY_DELAY}ms...`);
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        }
+    }
+    throw lastError;
+}
+
 async function checkEndpoint(url) {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return await response.json();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    try {
+        const response = await fetch(url, {
+            signal: controller.signal,
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('Request timed out');
+        }
+        throw error;
+    }
 }
 
 function updateApiStatus(data, responseTime) {
@@ -63,13 +133,14 @@ function updateBotStatus(data) {
     if (data.status === 'online') {
         botCard.className = 'status-card healthy';
         connectionElement.textContent = '🟢 Connected';
+        serversElement.textContent = data.servers?.toLocaleString() || '-';
+        usersElement.textContent = data.users?.toLocaleString() || '-';
     } else {
         botCard.className = 'status-card error';
         connectionElement.textContent = '🔴 Disconnected';
+        serversElement.textContent = '-';
+        usersElement.textContent = '-';
     }
-
-    serversElement.textContent = data.servers?.toLocaleString() || '-';
-    usersElement.textContent = data.users?.toLocaleString() || '-';
 }
 
 function updateDbStatus(data) {
@@ -80,12 +151,12 @@ function updateDbStatus(data) {
     if (data.status === 'connected') {
         dbCard.className = 'status-card healthy';
         connectionElement.textContent = '🟢 Connected';
+        latencyElement.textContent = data.latency ? `${data.latency}ms` : '-';
     } else {
         dbCard.className = 'status-card error';
         connectionElement.textContent = '🔴 Disconnected';
+        latencyElement.textContent = '-';
     }
-
-    latencyElement.textContent = data.latency ? `${data.latency}ms` : '-';
 }
 
 function updateSystemStatus(data) {
@@ -95,9 +166,14 @@ function updateSystemStatus(data) {
     const diskElement = document.getElementById('diskSpace');
 
     systemCard.className = 'status-card';
-    if (data.cpu < 70) systemCard.classList.add('healthy');
-    else if (data.cpu < 90) systemCard.classList.add('warning');
-    else systemCard.classList.add('error');
+    
+    if (data.cpu < 70) {
+        systemCard.classList.add('healthy');
+    } else if (data.cpu < 90) {
+        systemCard.classList.add('warning');
+    } else {
+        systemCard.classList.add('error');
+    }
 
     cpuElement.textContent = data.cpu ? `${data.cpu}%` : '-';
     memoryElement.textContent = data.memory || '-';

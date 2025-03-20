@@ -4,8 +4,10 @@ const { isAdmin, isBotOwner } = require('../middleware/auth');
 const os = require('os');
 const mongoose = require('mongoose');
 
-// Health check endpoint - no auth required
+// Public health check endpoint - no auth required
 router.get('/health', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://developerhubofficial.github.io');
+  res.header('Access-Control-Allow-Methods', 'GET');
   res.json({
     status: 'online',
     timestamp: new Date().toISOString(),
@@ -13,8 +15,10 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Database health check
+// Public database health check - no auth required
 router.get('/health/database', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://developerhubofficial.github.io');
+  res.header('Access-Control-Allow-Methods', 'GET');
   try {
     const startTime = Date.now();
     await mongoose.connection.db.admin().ping();
@@ -33,14 +37,16 @@ router.get('/health/database', async (req, res) => {
   }
 });
 
-// System health check
+// Public system health check - no auth required
 router.get('/health/system', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://developerhubofficial.github.io');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  
   const totalMemory = os.totalmem();
   const freeMemory = os.freemem();
   const usedMemory = totalMemory - freeMemory;
   const memoryUsage = Math.round((usedMemory / totalMemory) * 100);
 
-  // Calculate CPU usage
   const cpus = os.cpus();
   const cpuUsage = cpus.reduce((acc, cpu) => {
     const total = Object.values(cpu.times).reduce((a, b) => a + b);
@@ -57,8 +63,10 @@ router.get('/health/system', (req, res) => {
   });
 });
 
-// Get bot status
+// Public bot status endpoint - no auth required
 router.get('/status', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://developerhubofficial.github.io');
+  res.header('Access-Control-Allow-Methods', 'GET');
   try {
     // This would integrate with your Discord bot to get its status
     // For now, we'll return a mock response
@@ -207,6 +215,19 @@ router.post('/execute', isBotOwner, async (req, res) => {
       error: error.message
     });
   }
+});
+
+// Frontend error logging endpoint
+router.post('/log', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://developerhubofficial.github.io');
+  res.header('Access-Control-Allow-Methods', 'POST');
+  
+  const { level, message, error } = req.body;
+  
+  // Log the error with timestamp and source
+  console.log(`[${new Date().toISOString()}] [${level}] [Frontend] ${message}`, error || '');
+  
+  res.json({ status: 'logged' });
 });
 
 // Helper function to format bytes
