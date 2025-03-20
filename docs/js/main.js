@@ -1,4 +1,4 @@
-import { API_URL } from './config.js';
+import CONFIG from './config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     checkApiStatus();
@@ -10,7 +10,7 @@ async function checkApiStatus() {
     
     try {
         const startTime = performance.now();
-        const response = await fetch(`${API_URL}/api/bot/health`);
+        const response = await fetch(`${CONFIG.API_URL}/api/bot/health`);
         const data = await response.json();
         const responseTime = Math.round(performance.now() - startTime);
 
@@ -22,6 +22,7 @@ async function checkApiStatus() {
             statusBadge.classList.remove('online');
         }
     } catch (error) {
+        console.error('API check failed:', error);
         statusBadge.textContent = '🔴 API Offline';
         statusBadge.classList.remove('online');
     }

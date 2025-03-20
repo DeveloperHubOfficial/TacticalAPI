@@ -1,4 +1,4 @@
-import { API_URL } from './config.js';
+import CONFIG from './config.js';
 
 let startTime = Date.now();
 
@@ -8,20 +8,20 @@ async function refreshStatus() {
     
     try {
         // Check API Status
-        const apiResponse = await checkEndpoint(`${API_URL}/api/bot/health`);
+        const apiResponse = await checkEndpoint(`${CONFIG.API_URL}/api/bot/health`);
         const responseTime = Math.round(performance.now() - startCheck);
         updateApiStatus(apiResponse, responseTime);
 
         // Check Bot Status
-        const botResponse = await checkEndpoint(`${API_URL}/api/bot/status`);
+        const botResponse = await checkEndpoint(`${CONFIG.API_URL}/api/bot/status`);
         updateBotStatus(botResponse);
 
         // Check DB Status
-        const dbResponse = await checkEndpoint(`${API_URL}/api/health/database`);
+        const dbResponse = await checkEndpoint(`${CONFIG.API_URL}/api/health/database`);
         updateDbStatus(dbResponse);
 
         // Check System Resources
-        const systemResponse = await checkEndpoint(`${API_URL}/api/health/system`);
+        const systemResponse = await checkEndpoint(`${CONFIG.API_URL}/api/health/system`);
         updateSystemStatus(systemResponse);
 
     } catch (error) {
@@ -134,6 +134,9 @@ function formatUptime(ms) {
     if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
     return `${seconds}s`;
 }
+
+// Export the refresh function to be accessible from the HTML
+window.refreshStatus = refreshStatus;
 
 // Initial check
 refreshStatus();

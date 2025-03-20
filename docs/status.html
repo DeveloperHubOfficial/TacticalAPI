@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Status - TacticalAPI</title>
-    <link rel="stylesheet" href="./css/style.css">
-    <base href="/TacticalAPI/">
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        // ...existing styles from the previous status.html...
         .status-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -81,9 +79,9 @@
         <div class="nav-wrapper">
             <h1>TacticalAPI</h1>
             <ul>
-                <li><a href="./">Home</a></li>
-                <li><a href="./docs">Documentation</a></li>
-                <li><a href="./status">Status</a></li>
+                <li><a href=".">Home</a></li>
+                <li><a href="docs.html">Documentation</a></li>
+                <li><a href="status.html">Status</a></li>
             </ul>
         </div>
     </nav>
@@ -92,7 +90,7 @@
         <section class="hero">
             <h1>System Status</h1>
             <p>Real-time monitoring of TacticalAPI services</p>
-            <button class="refresh-button" onclick="refreshStatus()">
+            <button class="refresh-button" onclick="window.refreshStatus()">
                 Refresh Status
             </button>
         </section>
@@ -166,6 +164,6 @@
         <p>&copy; 2024 TacticalAPI. All rights reserved.</p>
     </footer>
 
-    <script src="./js/status.js"></script>
+    <script type="module" src="js/status.js"></script>
 </body>
 </html>

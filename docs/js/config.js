@@ -1,12 +1,12 @@
 // API endpoint configuration
 const config = {
     production: {
-        apiUrl: 'https://api.tactical-ai.com', // Update this with your production API URL
-        wsUrl: 'wss://api.tactical-ai.com'     // Update this with your production WebSocket URL
+        apiUrl: 'https://developerhubofficial.github.io/TacticalAPI',
+        wsUrl: 'wss://developerhubofficial.github.io/TacticalAPI/'
     },
     staging: {
-        apiUrl: 'https://staging-api.tactical-ai.com',
-        wsUrl: 'wss://staging-api.tactical-ai.com'
+        apiUrl: 'https://developerhubofficial.github.io/TacticalAPI/',
+        wsUrl: 'wss://developerhubofficial.github.io/TacticalAPI/'
     },
     development: {
         apiUrl: 'http://localhost:3000',
@@ -27,5 +27,9 @@ function getEnvironment() {
 
 // Export the configuration for the current environment
 const currentEnv = getEnvironment();
-export const API_URL = config[currentEnv].apiUrl;
-export const WS_URL = config[currentEnv].wsUrl;
+const CONFIG = {
+    API_URL: config[currentEnv].apiUrl,
+    WS_URL: config[currentEnv].wsUrl
+};
+
+export default CONFIG;
