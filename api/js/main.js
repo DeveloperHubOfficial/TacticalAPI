@@ -10,7 +10,7 @@ async function checkApiStatus() {
     
     try {
         const startTime = performance.now();
-        const response = await fetch(`${CONFIG.API_URL}/api/bot/health`);
+        const response = await fetch(`${CONFIG.API_URL}/bot/health`);
         const data = await response.json();
         const responseTime = Math.round(performance.now() - startTime);
 

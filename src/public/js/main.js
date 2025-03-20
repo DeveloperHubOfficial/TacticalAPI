@@ -5,9 +5,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function checkApiStatus() {
     const statusBadge = document.getElementById('apiStatus');
+    const baseUrl = window.location.hostname === 'localhost' ? '' : '/TacticalAPI/api';
     
     try {
-        const response = await fetch('/api/bot/health');
+        const response = await fetch(`${baseUrl}/bot/health`);
         const data = await response.json();
         
         if (data.status === 'online') {

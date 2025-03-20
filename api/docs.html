@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation - TacticalAPI</title>
     <link rel="stylesheet" href="./css/style.css">
-    <base href="/TacticalAPI/">
+    <base href="/TacticalAPI/api/">
     <style>
         .docs-section {
             background: var(--secondary);
@@ -47,9 +47,9 @@
         <div class="nav-wrapper">
             <h1>TacticalAPI</h1>
             <ul>
-                <li><a href="./">Home</a></li>
-                <li><a href="./docs">Documentation</a></li>
-                <li><a href="./status">Status</a></li>
+                <li><a href="../">Home</a></li>
+                <li><a href="docs.html">Documentation</a></li>
+                <li><a href="status.html">Status</a></li>
             </ul>
         </div>
     </nav>
@@ -57,6 +57,12 @@
     <main>
         <h1>API Documentation</h1>
         
+        <section class="docs-section">
+            <h2>Base URL</h2>
+            <p>All API endpoints are served from: <code>https://developerhubofficial.github.io/TacticalAPI/api</code></p>
+            <p>Example: <code>https://developerhubofficial.github.io/TacticalAPI/api/bot/health</code></p>
+        </section>
+
         <section class="docs-section">
             <h2>Authentication</h2>
             <p>All endpoints except <code>/api/bot/health</code> require authentication using JWT tokens.</p>

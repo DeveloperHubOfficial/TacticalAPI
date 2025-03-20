@@ -6,20 +6,20 @@ async function refreshStatus() {
     
     try {
         // Check API Status
-        const apiResponse = await checkEndpoint('/api/bot/health');
+        const apiResponse = await checkEndpoint('/bot/health');
         const responseTime = Math.round(performance.now() - startCheck);
         updateApiStatus(apiResponse, responseTime);
 
         // Check Bot Status
-        const botResponse = await checkEndpoint('/api/bot/status');
+        const botResponse = await checkEndpoint('/bot/status');
         updateBotStatus(botResponse);
 
         // Check DB Status
-        const dbResponse = await checkEndpoint('/api/health/database');
+        const dbResponse = await checkEndpoint('/health/database');
         updateDbStatus(dbResponse);
 
         // Check System Resources
-        const systemResponse = await checkEndpoint('/api/health/system');
+        const systemResponse = await checkEndpoint('/health/system');
         updateSystemStatus(systemResponse);
 
     } catch (error) {

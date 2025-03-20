@@ -3,11 +3,11 @@ import CONFIG from './config.js';
 let startTime = Date.now();
 let retryCount = 0;
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000; // 2 seconds
+const RETRY_DELAY = 2000;
 
 async function logError(level, message, error = null) {
     try {
-        await fetch(`${CONFIG.API_URL}/api/bot/log`, {
+        await fetch(`${CONFIG.API_URL}/bot/log`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -26,84 +26,62 @@ async function logError(level, message, error = null) {
 }
 
 async function refreshStatus() {
-    const startCheck = performance.now();
-    updateLastUpdated();
-    
     try {
-        // Check API Status with retry
-        const apiResponse = await retryOperation(() => checkEndpoint(`${CONFIG.API_URL}/api/bot/health`));
-        const responseTime = Math.round(performance.now() - startCheck);
-        updateApiStatus(apiResponse, responseTime);
+        const [apiHealth, dbHealth, sysHealth, botStats] = await Promise.allSettled([
+            checkEndpoint(`${CONFIG.API_URL}/bot/health`),
+            checkEndpoint(`${CONFIG.API_URL}/bot/health/database`),
+            checkEndpoint(`${CONFIG.API_URL}/bot/health/system`),
+            checkEndpoint(`${CONFIG.API_URL}/bot/status`)
+        ]);
 
-        // Check Bot Status
-        const botResponse = await retryOperation(() => checkEndpoint(`${CONFIG.API_URL}/api/bot/status`));
-        updateBotStatus(botResponse);
+        updateLastUpdated();
 
-        // Check DB Status
-        const dbResponse = await retryOperation(() => checkEndpoint(`${CONFIG.API_URL}/api/bot/health/database`));
-        updateDbStatus(dbResponse);
-
-        // Check System Resources
-        const systemResponse = await retryOperation(() => checkEndpoint(`${CONFIG.API_URL}/api/bot/health/system`));
-        updateSystemStatus(systemResponse);
-
-        // Reset retry count on success
-        retryCount = 0;
-        
-        // Log successful status update
-        await logError('info', 'Status update completed successfully', { 
-            responseTime,
-            apiStatus: apiResponse.status,
-            botStatus: botResponse.status
-        });
-    } catch (error) {
-        console.error('Error refreshing status:', error);
-        await logError('error', 'Failed to refresh status', error);
-        markServiceDown();
-    }
-}
-
-async function retryOperation(operation) {
-    let lastError;
-    for (let i = 0; i < MAX_RETRIES; i++) {
-        try {
-            return await operation();
-        } catch (error) {
-            lastError = error;
-            console.warn(`Attempt ${i + 1} failed, retrying in ${RETRY_DELAY}ms...`);
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        if (apiHealth.status === 'fulfilled') {
+            updateApiStatus(apiHealth.value.data, apiHealth.value.responseTime);
+        } else {
+            markServiceDown('api');
+            await logError('error', 'API health check failed', apiHealth.reason);
         }
+
+        if (dbHealth.status === 'fulfilled') {
+            updateDbStatus(dbHealth.value.data);
+        } else {
+            markServiceDown('database');
+            await logError('error', 'Database health check failed', dbHealth.reason);
+        }
+
+        if (sysHealth.status === 'fulfilled') {
+            updateSystemStatus(sysHealth.value.data);
+        } else {
+            markServiceDown('system');
+            await logError('error', 'System health check failed', sysHealth.reason);
+        }
+
+        if (botStats.status === 'fulfilled') {
+            updateBotStatus(botStats.value.data);
+        } else {
+            markServiceDown('bot');
+            await logError('error', 'Bot status check failed', botStats.reason);
+        }
+
+    } catch (error) {
+        console.error('Status refresh failed:', error);
+        await logError('error', 'Status refresh failed', error);
+        markServiceDown('all');
     }
-    throw lastError;
 }
 
 async function checkEndpoint(url) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            mode: 'cors',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            throw new Error('Request timed out');
-        }
-        throw error;
+    const startTime = performance.now();
+    const response = await fetch(url);
+    const responseTime = Math.round(performance.now() - startTime);
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
+    const data = await response.json();
+    return { data, responseTime };
 }
 
 function updateApiStatus(data, responseTime) {
@@ -129,74 +107,83 @@ function updateBotStatus(data) {
     const connectionElement = document.getElementById('botConnection');
     const serversElement = document.getElementById('botServers');
     const usersElement = document.getElementById('botUsers');
+    const commandsElement = document.getElementById('botCommands');
 
     if (data.status === 'online') {
         botCard.className = 'status-card healthy';
         connectionElement.textContent = '🟢 Connected';
-        serversElement.textContent = data.servers?.toLocaleString() || '-';
-        usersElement.textContent = data.users?.toLocaleString() || '-';
     } else {
         botCard.className = 'status-card error';
         connectionElement.textContent = '🔴 Disconnected';
-        serversElement.textContent = '-';
-        usersElement.textContent = '-';
     }
+
+    serversElement.textContent = data.servers?.toLocaleString() || '-';
+    usersElement.textContent = data.users?.toLocaleString() || '-';
+    commandsElement.textContent = data.commands_used?.toLocaleString() || '-';
 }
 
 function updateDbStatus(data) {
     const dbCard = document.getElementById('dbCard');
-    const connectionElement = document.getElementById('dbConnection');
+    const statusElement = document.getElementById('dbStatus');
     const latencyElement = document.getElementById('dbLatency');
+    const nameElement = document.getElementById('dbName');
 
     if (data.status === 'connected') {
         dbCard.className = 'status-card healthy';
-        connectionElement.textContent = '🟢 Connected';
-        latencyElement.textContent = data.latency ? `${data.latency}ms` : '-';
+        statusElement.textContent = '🟢 Connected';
     } else {
         dbCard.className = 'status-card error';
-        connectionElement.textContent = '🔴 Disconnected';
-        latencyElement.textContent = '-';
+        statusElement.textContent = '🔴 Disconnected';
     }
+
+    latencyElement.textContent = `${data.latency}ms`;
+    nameElement.textContent = data.name || '-';
 }
 
 function updateSystemStatus(data) {
-    const systemCard = document.getElementById('systemCard');
+    const sysCard = document.getElementById('systemCard');
     const cpuElement = document.getElementById('cpuUsage');
     const memoryElement = document.getElementById('memoryUsage');
     const diskElement = document.getElementById('diskSpace');
 
-    systemCard.className = 'status-card';
-    
-    if (data.cpu < 70) {
-        systemCard.classList.add('healthy');
-    } else if (data.cpu < 90) {
-        systemCard.classList.add('warning');
-    } else {
-        systemCard.classList.add('error');
-    }
-
-    cpuElement.textContent = data.cpu ? `${data.cpu}%` : '-';
-    memoryElement.textContent = data.memory || '-';
-    diskElement.textContent = data.disk || '-';
+    sysCard.className = 'status-card healthy';
+    cpuElement.textContent = `${data.cpu}%`;
+    memoryElement.textContent = data.memory;
+    diskElement.textContent = data.disk;
 }
 
-function markServiceDown() {
-    const cards = document.querySelectorAll('.status-card');
-    cards.forEach(card => {
-        card.className = 'status-card error';
-        const values = card.querySelectorAll('.metric-value');
-        values.forEach(value => {
-            if (value.id === 'apiStatus') value.textContent = '🔴 Offline';
-            else if (value.id === 'botConnection') value.textContent = '🔴 Disconnected';
-            else if (value.id === 'dbConnection') value.textContent = '🔴 Disconnected';
-            else value.textContent = '-';
-        });
-    });
+function markServiceDown(service) {
+    const cards = {
+        api: 'apiCard',
+        database: 'dbCard',
+        system: 'systemCard',
+        bot: 'botCard',
+        all: ['apiCard', 'dbCard', 'systemCard', 'botCard']
+    };
+
+    const markDown = (cardId) => {
+        const card = document.getElementById(cardId);
+        if (card) {
+            card.className = 'status-card error';
+            const statusElement = card.querySelector('[id$="Status"]');
+            if (statusElement) {
+                statusElement.textContent = '🔴 Offline';
+            }
+        }
+    };
+
+    if (service === 'all') {
+        cards.all.forEach(markDown);
+    } else {
+        markDown(cards[service]);
+    }
 }
 
 function updateLastUpdated() {
     const element = document.getElementById('lastUpdated');
-    element.textContent = new Date().toLocaleTimeString();
+    if (element) {
+        element.textContent = new Date().toLocaleString();
+    }
 }
 
 function formatUptime(ms) {

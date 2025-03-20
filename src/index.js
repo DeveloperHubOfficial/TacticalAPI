@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configure CORS
 app.use(cors({
-    origin: ['https://developerhubofficial.github.io', 'http://localhost:3000'],
+    origin: ['https://developerhubofficial.github.io'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -40,16 +40,17 @@ app.use(cors({
 
 app.use(morgan('dev'));
 
-// Configure Helmet with adjustments for static file serving
+// Configure Helmet with adjustments for GitHub Pages
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-            imgSrc: ["'self'", "https:", "data:"],
-            fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
-            connectSrc: ["'self'", "https://developerhubofficial.github.io"]
+            defaultSrc: ["'self'", "https://developerhubofficial.github.io"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://developerhubofficial.github.io"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://developerhubofficial.github.io"],
+            imgSrc: ["'self'", "https:", "data:", "https://developerhubofficial.github.io"],
+            fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://developerhubofficial.github.io"],
+            connectSrc: ["'self'", "https://developerhubofficial.github.io"],
+            frameSrc: ["'self'", "https://developerhubofficial.github.io"]
         }
     },
     crossOriginEmbedderPolicy: false,
@@ -57,7 +58,7 @@ app.use(helmet({
 }));
 
 // Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/TacticalAPI/api', express.static(path.join(__dirname, 'public')));
 
 // Rate limiting
 const apiLimiter = rateLimit({
@@ -68,15 +69,14 @@ const apiLimiter = rateLimit({
     message: 'Too many requests from this IP, please try again after 15 minutes'
 });
 
-// Apply rate limiting to API routes only
-app.use('/api', apiLimiter);
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', verifyToken, userRoutes);
-app.use('/api/bot', botRoutes); // No verifyToken here since some endpoints are public
-app.use('/api/guilds', verifyToken, guildRoutes);
-app.use('/api/commands', verifyToken, commandRoutes);
+// Apply rate limiting to API routes and set up route prefixes for GitHub Pages
+const basePathPrefix = '/TacticalAPI/api';
+app.use(`${basePathPrefix}/api`, apiLimiter);
+app.use(`${basePathPrefix}/api/auth`, authRoutes);
+app.use(`${basePathPrefix}/api/users`, verifyToken, userRoutes);
+app.use(`${basePathPrefix}/api/bot`, botRoutes);
+app.use(`${basePathPrefix}/api/guilds`, verifyToken, guildRoutes);
+app.use(`${basePathPrefix}/api/commands`, verifyToken, commandRoutes);
 
 // Serve documentation
 app.get('/docs', (req, res) => {

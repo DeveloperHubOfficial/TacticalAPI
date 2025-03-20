@@ -1,14 +1,14 @@
 // API endpoint configuration
 const config = {
     production: {
-        apiUrl: 'https://developerhubofficial.github.io/TacticalAPI/docs',
-        wsUrl: 'wss://developerhubofficial.github.io/TacticalAPI/docs',
-        fallbackUrl: 'https://developerhubofficial.github.io/TacticalAPI/docs'
+        apiUrl: 'https://developerhubofficial.github.io/TacticalAPI/api',
+        wsUrl: 'wss://developerhubofficial.github.io/TacticalAPI/api',
+        fallbackUrl: 'https://developerhubofficial.github.io/TacticalAPI/api'
     },
     staging: {
-        apiUrl: 'https://developerhubofficial.github.io/TacticalAPI/docs',
-        wsUrl: 'wss://developerhubofficial.github.io/TacticalAPI/docs',
-        fallbackUrl: 'https://developerhubofficial.github.io/TacticalAPI/docs'
+        apiUrl: 'https://developerhubofficial.github.io/TacticalAPI/api',
+        wsUrl: 'wss://developerhubofficial.github.io/TacticalAPI/api',
+        fallbackUrl: 'https://developerhubofficial.github.io/TacticalAPI/api'
     },
     development: {
         apiUrl: 'http://localhost:3000',
@@ -19,19 +19,10 @@ const config = {
 
 // Determine environment based on URL
 function getEnvironment() {
-    // Check if we're in a development environment
     if (window.location.hostname === 'localhost' || 
         window.location.hostname === '127.0.0.1') {
         return 'development';
     }
-    
-    // Check if we're on the staging site
-    if (window.location.hostname.includes('staging') || 
-        window.location.hostname.includes('test')) {
-        return 'staging';
-    }
-    
-    // Default to production for GitHub Pages
     return 'production';
 }
 
