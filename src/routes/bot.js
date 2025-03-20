@@ -1,6 +1,61 @@
 const express = require('express');
 const router = express.Router();
 const { isAdmin, isBotOwner } = require('../middleware/auth');
+const os = require('os');
+const mongoose = require('mongoose');
+
+// Health check endpoint - no auth required
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'online',
+    timestamp: new Date().toISOString(),
+    message: 'TacticalAPI is running'
+  });
+});
+
+// Database health check
+router.get('/health/database', async (req, res) => {
+  try {
+    const startTime = Date.now();
+    await mongoose.connection.db.admin().ping();
+    const latency = Date.now() - startTime;
+
+    res.json({
+      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      latency,
+      name: mongoose.connection.name
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'disconnected',
+      error: error.message
+    });
+  }
+});
+
+// System health check
+router.get('/health/system', (req, res) => {
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+  const usedMemory = totalMemory - freeMemory;
+  const memoryUsage = Math.round((usedMemory / totalMemory) * 100);
+
+  // Calculate CPU usage
+  const cpus = os.cpus();
+  const cpuUsage = cpus.reduce((acc, cpu) => {
+    const total = Object.values(cpu.times).reduce((a, b) => a + b);
+    const idle = cpu.times.idle;
+    return acc + ((1 - idle / total) * 100);
+  }, 0) / cpus.length;
+
+  res.json({
+    cpu: Math.round(cpuUsage),
+    memory: `${memoryUsage}% (${formatBytes(usedMemory)} / ${formatBytes(totalMemory)})`,
+    disk: '-- GB', // You can implement disk space check if needed
+    platform: os.platform(),
+    uptime: Math.floor(os.uptime())
+  });
+});
 
 // Get bot status
 router.get('/status', async (req, res) => {
@@ -153,5 +208,13 @@ router.post('/execute', isBotOwner, async (req, res) => {
     });
   }
 });
+
+// Helper function to format bytes
+function formatBytes(bytes) {
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  if (bytes === 0) return '0 Byte';
+  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+  return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+}
 
 module.exports = router;

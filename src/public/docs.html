@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - TacticalAPI</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .docs-section {
+            background: var(--secondary);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .endpoint {
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin: 1rem 0;
+            background: rgba(114, 137, 218, 0.1);
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .method.get { background: #43b581; }
+        .method.post { background: #7289da; }
+        .method.put { background: #faa61a; }
+        .method.delete { background: #f04747; }
+        
+        code {
+            background: rgba(0,0,0,0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            <h1>TacticalAPI</h1>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/docs">Documentation</a></li>
+                <li><a href="/status">Status</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <h1>API Documentation</h1>
+        
+        <section class="docs-section">
+            <h2>Authentication</h2>
+            <p>All endpoints except <code>/api/bot/health</code> require authentication using JWT tokens.</p>
+            
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <code>/api/auth/register</code>
+                <p>Register a new API user</p>
+            </div>
+            
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <code>/api/auth/login</code>
+                <p>Login and get JWT token</p>
+            </div>
+        </section>
+
+        <section class="docs-section">
+            <h2>Bot Management</h2>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <code>/api/bot/health</code>
+                <p>Check if the API is online</p>
+            </div>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <code>/api/bot/status</code>
+                <p>Get bot status and statistics</p>
+            </div>
+        </section>
+
+        <section class="docs-section">
+            <h2>Guild Management</h2>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <code>/api/guilds</code>
+                <p>List all guilds the bot is in</p>
+            </div>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <code>/api/guilds/:id/settings</code>
+                <p>Get settings for a specific guild</p>
+            </div>
+            
+            <div class="endpoint">
+                <span class="method put">PUT</span>
+                <code>/api/guilds/:id/settings</code>
+                <p>Update settings for a specific guild</p>
+            </div>
+        </section>
+
+        <section class="docs-section">
+            <h2>User Management</h2>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <code>/api/users/me</code>
+                <p>Get current user profile</p>
+            </div>
+            
+            <div class="endpoint">
+                <span class="method put">PUT</span>
+                <code>/api/users/me</code>
+                <p>Update current user profile</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 TacticalAPI. All rights reserved.</p>
+    </footer>
+</body>
+</html>

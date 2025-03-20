@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status - TacticalAPI</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .status-card {
+            background: var(--secondary);
+            padding: 1.5rem;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+        }
+
+        .status-card.healthy::before {
+            background: #43b581;
+        }
+
+        .status-card.warning::before {
+            background: #faa61a;
+        }
+
+        .status-card.error::before {
+            background: #f04747;
+        }
+
+        .status-card h3 {
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-family: monospace;
+            color: var(--primary);
+        }
+
+        .history-graph {
+            width: 100%;
+            height: 50px;
+            background: rgba(114, 137, 218, 0.1);
+            margin-top: 1rem;
+            border-radius: 4px;
+        }
+
+        .refresh-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .refresh-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .last-updated {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            <h1>TacticalAPI</h1>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/docs">Documentation</a></li>
+                <li><a href="/status">Status</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <h1>System Status</h1>
+            <p>Real-time monitoring of TacticalAPI services</p>
+            <button class="refresh-button" onclick="refreshStatus()">
+                Refresh Status
+            </button>
+        </section>
+
+        <div class="status-grid">
+            <div class="status-card" id="apiCard">
+                <h3>API Status</h3>
+                <div class="metric">
+                    <span>Status</span>
+                    <span class="metric-value" id="apiStatus">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span>Response Time</span>
+                    <span class="metric-value" id="apiResponseTime">-</span>
+                </div>
+                <div class="metric">
+                    <span>Uptime</span>
+                    <span class="metric-value" id="apiUptime">-</span>
+                </div>
+            </div>
+
+            <div class="status-card" id="botCard">
+                <h3>Bot Status</h3>
+                <div class="metric">
+                    <span>Connection</span>
+                    <span class="metric-value" id="botConnection">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span>Servers</span>
+                    <span class="metric-value" id="botServers">-</span>
+                </div>
+                <div class="metric">
+                    <span>Users</span>
+                    <span class="metric-value" id="botUsers">-</span>
+                </div>
+            </div>
+
+            <div class="status-card" id="dbCard">
+                <h3>Database Status</h3>
+                <div class="metric">
+                    <span>Connection</span>
+                    <span class="metric-value" id="dbConnection">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span>Latency</span>
+                    <span class="metric-value" id="dbLatency">-</span>
+                </div>
+            </div>
+
+            <div class="status-card" id="systemCard">
+                <h3>System Resources</h3>
+                <div class="metric">
+                    <span>CPU Usage</span>
+                    <span class="metric-value" id="cpuUsage">-</span>
+                </div>
+                <div class="metric">
+                    <span>Memory Usage</span>
+                    <span class="metric-value" id="memoryUsage">-</span>
+                </div>
+                <div class="metric">
+                    <span>Disk Space</span>
+                    <span class="metric-value" id="diskSpace">-</span>
+                </div>
+            </div>
+        </div>
+
+        <p class="last-updated">Last updated: <span id="lastUpdated">Never</span></p>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 TacticalAPI. All rights reserved.</p>
+    </footer>
+
+    <script src="/js/status.js"></script>
+</body>
+</html>
